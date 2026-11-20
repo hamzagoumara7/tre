@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="My Treasury">
+<link rel="manifest" href="manifest.json">
+<title>My Treasury</title>
+<style>
+:root{--bg:#0b1220;--panel:#131e30;--panel2:#1a2940;--text:#f3f6fb;--muted:#9baac0;--green:#42d392;--red:#ff737d;--blue:#76a9ff;--line:#26364e}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding-bottom:88px}
+header{padding:22px 18px 14px;background:linear-gradient(140deg,#14243a,#101827)}.top{display:flex;justify-content:space-between;align-items:center}.brand{font-size:22px;font-weight:800;letter-spacing:-.5px}.brand span{color:var(--green)}.month{color:var(--muted);font-size:13px;margin-top:5px}
+main{max-width:720px;margin:auto;padding:14px}.hero{background:linear-gradient(135deg,#1b3650,#173a38);border:1px solid #31565b;border-radius:20px;padding:18px;margin-bottom:13px}.eyebrow{font-size:11px;letter-spacing:1px;color:#b9d5d4;font-weight:700}.balance{font-size:34px;font-weight:800;margin:8px 0 4px}.sub{font-size:12px;color:#c2d4dc}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px}.label{font-size:12px;color:var(--muted)}.value{font-size:21px;font-weight:750;margin-top:7px}.green{color:var(--green)}.red{color:var(--red)}.blue{color:var(--blue)}
+.section{display:flex;justify-content:space-between;align-items:center;margin:20px 2px 10px}.section h2{font-size:17px;margin:0}.section small{color:var(--muted)}
+.item{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);padding:12px;border-radius:14px;margin-bottom:8px}.ico{width:40px;height:40px;border-radius:12px;background:var(--panel2);display:grid;place-items:center;font-size:19px}.grow{flex:1;min-width:0}.item strong{display:block;font-size:14px}.meta{font-size:11px;color:var(--muted);margin-top:4px}.amount{font-weight:700;white-space:nowrap}.pill{font-size:10px;padding:5px 8px;border-radius:20px;background:#24354b;color:#c5d7ed}
+button{border:0;border-radius:12px;padding:12px 14px;background:var(--green);color:#092016;font-weight:800;font-size:14px;cursor:pointer}.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}.danger{background:#49252e;color:#ffdce0}.wide{width:100%}
+nav{position:fixed;bottom:0;left:0;right:0;background:#101a2aee;backdrop-filter:blur(15px);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:9px 4px calc(9px + env(safe-area-inset-bottom));z-index:5}nav button{background:none;color:var(--muted);padding:7px 10px;font-size:11px}nav button.active{color:var(--green)}
+.page{display:none}.page.active{display:block}
+input,select{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;background:#0e1929;color:var(--text);font-size:15px;margin:6px 0 13px}
+label{font-size:12px;color:var(--muted)}.formcard{background:var(--panel);border:1px solid var(--line);padding:16px;border-radius:17px}
+.progress{height:8px;border-radius:10px;background:#26364e;overflow:hidden;margin-top:10px}.progress span{display:block;height:100%;background:var(--green);width:0}
+.notice{font-size:12px;color:var(--muted);line-height:1.5;background:#17263a;border-radius:12px;padding:12px;margin:10px 0}
+.empty{color:var(--muted);font-size:13px;padding:18px;text-align:center;background:var(--panel);border-radius:14px}
+small.muted{color:var(--muted)}
+</style>
+</head>
+<body>
+<header><div class="top"><div><div class="brand">My <span>Treasury</span></div><div class="month" id="monthLabel"></div></div><div class="pill">MAD · DH</div></div></header>
+<main>
+<section class="page active" id="home">
+ <div class="hero"><div class="eyebrow">RESTE APRÈS CHARGES FIXES</div><div class="balance" id="remaining">9 803 DH</div><div class="sub">Salaire net 16 000 DH · Charges fixes 6 197 DH</div></div>
+ <div class="grid">
+  <div class="card"><div class="label">Revenus du mois</div><div class="value green" id="income">16 000 DH</div></div>
+  <div class="card"><div class="label">Dépenses enregistrées</div><div class="value red" id="spent">0 DH</div></div>
+  <div class="card"><div class="label">Charges fixes</div><div class="value" id="fixed">6 197 DH</div></div>
+  <div class="card"><div class="label">Disponible estimé</div><div class="value blue" id="available">9 803 DH</div></div>
+  <div class="card"><div class="label">Ma cagnotte</div><div class="value green" id="savingsTotal">0 DH</div><div class="meta">Versements réellement effectués</div></div>
+ </div>
+ <div class="section"><h2>Prochaines échéances</h2><small>Rappel J-1</small></div><div id="upcoming"></div>
+ <div class="section"><h2>Dernières dépenses</h2><button class="secondary" onclick="showPage('add')">+ Ajouter</button></div><div id="recent"></div>
+</section>
+<section class="page" id="add">
+ <div class="section"><h2>Ajouter une dépense</h2></div>
+ <div class="formcard">
+  <label>Montant (DH)</label><input id="expenseAmount" type="number" min="0" step="0.01" placeholder="Ex. 45">
+  <label>Catégorie</label><select id="expenseCategory"><option>Alimentation</option><option>Transport / carburant</option><option>Restaurants / sorties</option><option>Shopping</option><option>Santé</option><option>Maison / factures</option><option>Abonnements</option><option>Autres</option></select>
+  <label>Date</label><input id="expenseDate" type="date">
+  <label>Commentaire (facultatif)</label><input id="expenseNote" placeholder="Ex. courses du week-end">
+  <button class="wide" onclick="addExpense()">Enregistrer la dépense</button>
+ </div>
+ <div class="notice">Chaque dépense enregistrée est ajoutée à ton historique et déduite du disponible estimé du mois.</div>
+</section>
+<section class="page" id="bills">
+ <div class="section"><h2>Échéances mensuelles</h2><small>Rappels J-1</small></div>
+ <div id="billList"></div>
+ <div class="notice">Les rappels J-1 sont affichés ici lorsque tu ouvres l'application. Les notifications push/locales iPhone seront configurées dans une prochaine étape.</div>
+ <div class="formcard">
+  <h3 style="margin-top:0">Ajouter un paiement récurrent</h3>
+  <label>Nom</label><input id="billName" placeholder="Ex. Assurance">
+  <label>Montant (DH)</label><input id="billAmount" type="number" min="0" placeholder="Ex. 300">
+  <label>Jour d'échéance (1 à 31)</label><input id="billDay" type="number" min="1" max="31" placeholder="Ex. 15">
+  <button class="wide" onclick="addBill()">Ajouter l'échéance</button>
+ </div>
+</section>
+
+<section class="page" id="savings">
+ <div class="section"><h2>💰 Ma Cagnotte</h2><small>Épargne réelle</small></div>
+ <div class="hero">
+  <div class="eyebrow">TOTAL ÉPARGNÉ</div>
+  <div class="balance" id="potTotal">0 DH</div>
+  <div class="sub">Objectif : 70 DH par jour · Début : 01/12/2026</div>
+ </div>
+ <div class="grid">
+  <div class="card"><div class="label">Objectif par jour</div><div class="value green">70 DH</div></div>
+  <div class="card"><div class="label">Objectif sur 30 jours</div><div class="value">2 100 DH</div></div>
+  <div class="card"><div class="label">Jours écoulés depuis le début</div><div class="value" id="savingsDays">0</div></div>
+  <div class="card"><div class="label">Objectif théorique cumulé</div><div class="value" id="savingsExpected">0 DH</div></div>
+ </div>
+ <div class="section"><h2>Progression</h2><small id="savingsProgressText">0 %</small></div>
+ <div class="progress"><span id="savingsProgress" style="width:0%"></span></div>
+ <div class="notice" id="savingsStatus">Ton objectif quotidien commencera le 1er décembre 2026. Les versements seront comptabilisés uniquement lorsqu'ils seront enregistrés.</div>
+ <div class="formcard">
+  <h3 style="margin-top:0">Enregistrer un versement</h3>
+  <label>Montant versé (DH)</label><input id="savingAmount" type="number" min="0" step="0.01" value="70">
+  <label>Date du versement</label><input id="savingDate" type="date" min="2026-12-01">
+  <label>Note (facultatif)</label><input id="savingNote" placeholder="Ex. Épargne du jour">
+  <button class="wide" id="savingButton" onclick="addSaving()">Ajouter à ma cagnotte</button>
+ </div>
+ <div class="section"><h2>Historique de la cagnotte</h2><small id="savingCount">0 versement</small></div>
+ <div id="savingHistory"></div>
+</section>
+
+<section class="page" id="history">
+ <div class="section"><h2>Historique des dépenses</h2><small id="historyCount"></small></div><div id="historyList"></div>
+</section>
+<section class="page" id="settings">
+ <div class="section"><h2>Paramètres</h2></div>
+ <div class="formcard">
+  <label>Salaire net mensuel (DH)</label><input id="salaryInput" type="number" value="16000">
+  <label>Solde bancaire actuel (DH)</label><input id="balanceInput" type="number" value="0">
+  <button class="wide" onclick="saveSettings()">Enregistrer les paramètres</button>
+ </div>
+ <div class="section"><h2>Sauvegarde</h2></div>
+ <button class="wide secondary" onclick="exportData()">Exporter mes données (JSON)</button>
+ <p class="notice">Les données sont enregistrées dans le stockage local de ce navigateur. Pense à exporter régulièrement une sauvegarde. Effacer les données du navigateur peut supprimer ton historique.</p>
+ <button class="wide danger" onclick="resetData()">Réinitialiser toutes les données</button>
+</section>
+</main>
+<nav>
+ <button class="active" data-page="home" onclick="showPage('home')">⌂<br>Accueil</button>
+ <button data-page="add" onclick="showPage('add')">＋<br>Dépense</button>
+ <button data-page="bills" onclick="showPage('bills')">◷<br>Échéances</button>
+ <button data-page="savings" onclick="showPage('savings')">💰<br>Cagnotte</button>
+ <button data-page="history" onclick="showPage('history')">▤<br>Historique</button>
+ <button data-page="settings" onclick="showPage('settings')">⚙<br>Réglages</button>
+</nav>
+<script>
+const DEFAULT={salary:16000,balance:0,savingsGoal:70,savingsStart:"2026-12-01",savings:[],bills:[
+{id:1,name:"Loyer",amount:3500,day:2,paidMonth:""},
+{id:2,name:"Téléphone",amount:100,day:10,paidMonth:""},
+{id:3,name:"Wi-Fi",amount:250,day:10,paidMonth:""},
+{id:4,name:"Crédit",amount:2347,day:2,paidMonth:""}],expenses:[]};
+let data=load();
+function load(){try{return {...DEFAULT,...JSON.parse(localStorage.getItem("myTreasury")||"{}")}}catch(e){return structuredClone(DEFAULT)}}
+function save(){localStorage.setItem("myTreasury",JSON.stringify(data));render()}
+function money(n){return Number(n||0).toLocaleString("fr-FR",{maximumFractionDigits:2})+" DH"}
+function monthKey(d=new Date()){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
+function monthStart(){return new Date(new Date().getFullYear(),new Date().getMonth(),1)}
+function monthlyExpenses(){return data.expenses.filter(x=>x.date.slice(0,7)===monthKey())}
+function fixedTotal(){return data.bills.reduce((s,b)=>s+Number(b.amount),0)}
+function daysUntil(day){let now=new Date(), target=new Date(now.getFullYear(),now.getMonth(),Math.min(day,new Date(now.getFullYear(),now.getMonth()+1,0).getDate()));if(target<new Date(now.getFullYear(),now.getMonth(),now.getDate()))target=new Date(now.getFullYear(),now.getMonth()+1,Math.min(day,new Date(now.getFullYear(),now.getMonth()+2,0).getDate()));return Math.round((target-new Date(now.getFullYear(),now.getMonth(),now.getDate()))/86400000)}
+function render(){
+ let spent=monthlyExpenses().reduce((s,x)=>s+Number(x.amount),0),fixed=fixedTotal(),savedThisMonth=(data.savings||[]).filter(x=>x.date.slice(0,7)===monthKey()).reduce((s,x)=>s+Number(x.amount),0),pot=(data.savings||[]).reduce((s,x)=>s+Number(x.amount),0),left=Number(data.salary)-fixed-spent-savedThisMonth;
+ document.getElementById("monthLabel").textContent=new Date().toLocaleDateString("fr-FR",{month:"long",year:"numeric"});
+ document.getElementById("income").textContent=money(data.salary);document.getElementById("spent").textContent=money(spent);document.getElementById("fixed").textContent=money(fixed);
+ document.getElementById("remaining").textContent=money(Number(data.salary)-fixed);document.getElementById("available").textContent=money(left);document.getElementById("savingsTotal").textContent=money(pot);
+ document.getElementById("salaryInput").value=data.salary;document.getElementById("balanceInput").value=data.balance;
+ let bills=[...data.bills].sort((a,b)=>daysUntil(a.day)-daysUntil(b.day));
+ document.getElementById("upcoming").innerHTML=bills.map(b=>`<div class="item"><div class="ico">${b.name==="Loyer"?"🏠":b.name==="Téléphone"?"📱":b.name==="Wi-Fi"?"🌐":"💳"}</div><div class="grow"><strong>${esc(b.name)}</strong><div class="meta">Le ${String(b.day).padStart(2,"0")} · ${daysUntil(b.day)===1?"Rappel demain":daysUntil(b.day)===0?"Échéance aujourd'hui":"Dans "+daysUntil(b.day)+" jours"}</div></div><div class="amount">${money(b.amount)}</div></div>`).join("")||'<div class="empty">Aucune échéance.</div>';
+ let expenses=[...monthlyExpenses()].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4);
+ document.getElementById("recent").innerHTML=expenses.map(expenseHTML).join("")||'<div class="empty">Aucune dépense enregistrée ce mois-ci.</div>';
+ let today=new Date().getDate();
+ document.getElementById("billList").innerHTML=bills.map(b=>{let paid=b.paidMonth===monthKey();return `<div class="item"><div class="ico">📌</div><div class="grow"><strong>${esc(b.name)}</strong><div class="meta">Échéance le ${String(b.day).padStart(2,"0")} · ${paid?"Payé ce mois-ci":daysUntil(b.day)===1?"À payer demain":daysUntil(b.day)===0?"À payer aujourd'hui":"À venir"}</div></div><div class="amount">${money(b.amount)}</div><button class="${paid?"secondary":""}" onclick="togglePaid(${b.id})">${paid?"Annuler":"Payé"}</button></div>`}).join("");
+ let all=[...data.expenses].sort((a,b)=>b.date.localeCompare(a.date));
+ document.getElementById("historyCount").textContent=all.length+" opération(s)";
+ document.getElementById("historyList").innerHTML=all.map(x=>expenseHTML(x,true)).join("")||'<div class="empty">Ton historique apparaîtra ici.</div>';
+ let potTotal=(data.savings||[]).reduce((s,x)=>s+Number(x.amount),0),start=new Date(data.savingsStart+"T00:00:00"),today=new Date();today.setHours(0,0,0,0);
+ let elapsed=today<start?0:Math.floor((today-start)/86400000)+1,expected=elapsed*Number(data.savingsGoal||70),pct=expected?Math.min(100,Math.round(potTotal/expected*100)):0;
+ document.getElementById("potTotal").textContent=money(potTotal);document.getElementById("savingsDays").textContent=elapsed;document.getElementById("savingsExpected").textContent=money(expected);
+ document.getElementById("savingsProgressText").textContent=pct+" %";document.getElementById("savingsProgress").style.width=pct+"%";
+ document.getElementById("savingCount").textContent=(data.savings||[]).length+" versement(s)";
+ document.getElementById("savingHistory").innerHTML=[...(data.savings||[])].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>`<div class="item"><div class="ico">🐷</div><div class="grow"><strong>Versement cagnotte</strong><div class="meta">${x.date}${x.note?" · "+esc(x.note):""}</div></div><div class="amount green">+ ${money(x.amount)}</div><button class="danger" onclick="deleteSaving(${x.id})">×</button></div>`).join("")||'<div class="empty">Aucun versement pour le moment.</div>';
+ let started=today>=start;document.getElementById("savingButton").disabled=!started;document.getElementById("savingButton").style.opacity=started?"1":".45";
+ document.getElementById("savingStatus").textContent=started?(potTotal>=expected?"Bravo, tu as atteint ou dépassé ton objectif théorique cumulé.":"Objectif théorique cumulé : "+money(expected)+". Continue à enregistrer uniquement les sommes réellement mises de côté."):"Ton objectif quotidien commencera le 1er décembre 2026. Tu pourras enregistrer tes premiers versements à partir de cette date.";
+ document.getElementById("savingDate").min=data.savingsStart;document.getElementById("savingDate").max=today.toISOString().slice(0,10);document.getElementById("savingDate").value=today.toISOString().slice(0,10);
+}
+function expenseHTML(x,del=false){return `<div class="item"><div class="ico">🧾</div><div class="grow"><strong>${esc(x.category)}</strong><div class="meta">${x.date}${x.note?" · "+esc(x.note):""}</div></div><div class="amount red">− ${money(x.amount)}</div>${del?`<button class="danger" onclick="deleteExpense(${x.id})">×</button>`:""}</div>`}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function addExpense(){let amount=Number(document.getElementById("expenseAmount").value),date=document.getElementById("expenseDate").value;if(!(amount>0)||!date){alert("Saisis un montant et une date valides.");return}data.expenses.push({id:Date.now(),amount,category:document.getElementById("expenseCategory").value,date,note:document.getElementById("expenseNote").value});document.getElementById("expenseAmount").value="";document.getElementById("expenseNote").value="";save();showPage("home")}
+function addBill(){let name=document.getElementById("billName").value.trim(),amount=Number(document.getElementById("billAmount").value),day=Number(document.getElementById("billDay").value);if(!name||!(amount>0)||day<1||day>31){alert("Vérifie le nom, le montant et le jour.");return}data.bills.push({id:Date.now(),name,amount,day,paidMonth:""});document.getElementById("billName").value="";document.getElementById("billAmount").value="";document.getElementById("billDay").value="";save()}
+function togglePaid(id){let b=data.bills.find(x=>x.id===id);b.paidMonth=b.paidMonth===monthKey()?"":monthKey();save()}
+function deleteExpense(id){if(confirm("Supprimer cette dépense ?")){data.expenses=data.expenses.filter(x=>x.id!==id);save()}}
+function addSaving(){let amount=Number(document.getElementById("savingAmount").value),date=document.getElementById("savingDate").value,note=document.getElementById("savingNote").value;if(!(amount>0)||!date){alert("Saisis un montant et une date valides.");return}if(date<data.savingsStart||date>new Date().toISOString().slice(0,10)){alert("La date doit être comprise entre le 1er décembre 2026 et aujourd'hui.");return}data.savings=data.savings||[];data.savings.push({id:Date.now(),amount,date,note});document.getElementById("savingNote").value="";save();alert("Versement ajouté à ta cagnotte.");}
+function deleteSaving(id){if(confirm("Supprimer ce versement de la cagnotte ?")){data.savings=(data.savings||[]).filter(x=>x.id!==id);save()}}
+function saveSettings(){data.salary=Number(document.getElementById("salaryInput").value)||0;data.balance=Number(document.getElementById("balanceInput").value)||0;save();alert("Paramètres enregistrés.")}
+function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="my-treasury-sauvegarde.json";a.click();URL.revokeObjectURL(a.href)}
+function resetData(){if(confirm("Effacer toutes tes opérations et revenir aux paramètres initiaux ?")){data=structuredClone(DEFAULT);save()}}
+function showPage(p){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(p).classList.add("active");document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===p));window.scrollTo(0,0)}
+document.getElementById("expenseDate").value=new Date().toISOString().slice(0,10);
+if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});
+render();
+</script>
+</body></html>
