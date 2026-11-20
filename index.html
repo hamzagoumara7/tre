@@ -124,21 +124,8 @@ const DEFAULT={salary:16000,balance:0,savingsGoal:70,savingsStart:"2026-12-01",s
 {id:3,name:"Wi-Fi",amount:250,day:10,paidMonth:""},
 {id:4,name:"Crédit",amount:2347,day:2,paidMonth:""}],expenses:[]};
 let data=load();
-function cloneDefault(){return JSON.parse(JSON.stringify(DEFAULT))}
-function load(){
- try{
-  const stored=JSON.parse(localStorage.getItem("myTreasury")||"{}");
-  const result={...cloneDefault(),...(stored&&typeof stored==="object"?stored:{})};
-  if(!Array.isArray(result.bills)) result.bills=cloneDefault().bills;
-  if(!Array.isArray(result.expenses)) result.expenses=[];
-  if(!Array.isArray(result.savings)) result.savings=[];
-  return result;
- }catch(e){console.error("Erreur de lecture des données My Treasury :",e);return cloneDefault()}
-}
-function save(){
- try{localStorage.setItem("myTreasury",JSON.stringify(data));render()}
- catch(e){console.error("Erreur d'enregistrement :",e);alert("Impossible d'enregistrer les données dans ce navigateur. Vérifie l'espace disponible et les paramètres de confidentialité.")}
-}
+function load(){try{return {...DEFAULT,...JSON.parse(localStorage.getItem("myTreasury")||"{}")}}catch(e){return structuredClone(DEFAULT)}}
+function save(){localStorage.setItem("myTreasury",JSON.stringify(data));render()}
 function money(n){return Number(n||0).toLocaleString("fr-FR",{maximumFractionDigits:2})+" DH"}
 function monthKey(d=new Date()){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
 function monthStart(){return new Date(new Date().getFullYear(),new Date().getMonth(),1)}
@@ -160,15 +147,15 @@ function render(){
  let all=[...data.expenses].sort((a,b)=>b.date.localeCompare(a.date));
  document.getElementById("historyCount").textContent=all.length+" opération(s)";
  document.getElementById("historyList").innerHTML=all.map(x=>expenseHTML(x,true)).join("")||'<div class="empty">Ton historique apparaîtra ici.</div>';
- let potTotal=(data.savings||[]).reduce((s,x)=>s+Number(x.amount),0),start=new Date(data.savingsStart+"T00:00:00"),today=new Date();today.setHours(0,0,0,0);
- let elapsed=today<start?0:Math.floor((today-start)/86400000)+1,expected=elapsed*Number(data.savingsGoal||70),pct=expected?Math.min(100,Math.round(potTotal/expected*100)):0;
+ let potTotal=(data.savings||[]).reduce((s,x)=>s+Number(x.amount),0),start=new Date(data.savingsStart+"T00:00:00"),todayDate=new Date();todayDate.setHours(0,0,0,0);
+ let elapsed=todayDate<start?0:Math.floor((todayDate-start)/86400000)+1,expected=elapsed*Number(data.savingsGoal||70),pct=expected?Math.min(100,Math.round(potTotal/expected*100)):0;
  document.getElementById("potTotal").textContent=money(potTotal);document.getElementById("savingsDays").textContent=elapsed;document.getElementById("savingsExpected").textContent=money(expected);
  document.getElementById("savingsProgressText").textContent=pct+" %";document.getElementById("savingsProgress").style.width=pct+"%";
  document.getElementById("savingCount").textContent=(data.savings||[]).length+" versement(s)";
  document.getElementById("savingHistory").innerHTML=[...(data.savings||[])].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>`<div class="item"><div class="ico">🐷</div><div class="grow"><strong>Versement cagnotte</strong><div class="meta">${x.date}${x.note?" · "+esc(x.note):""}</div></div><div class="amount green">+ ${money(x.amount)}</div><button class="danger" onclick="deleteSaving(${x.id})">×</button></div>`).join("")||'<div class="empty">Aucun versement pour le moment.</div>';
- let started=today>=start;document.getElementById("savingButton").disabled=!started;document.getElementById("savingButton").style.opacity=started?"1":".45";
+ let started=todayDate>=start;document.getElementById("savingButton").disabled=!started;document.getElementById("savingButton").style.opacity=started?"1":".45";
  document.getElementById("savingStatus").textContent=started?(potTotal>=expected?"Bravo, tu as atteint ou dépassé ton objectif théorique cumulé.":"Objectif théorique cumulé : "+money(expected)+". Continue à enregistrer uniquement les sommes réellement mises de côté."):"Ton objectif quotidien commencera le 1er décembre 2026. Tu pourras enregistrer tes premiers versements à partir de cette date.";
- document.getElementById("savingDate").min=data.savingsStart;document.getElementById("savingDate").max=today.toISOString().slice(0,10);document.getElementById("savingDate").value=today.toISOString().slice(0,10);
+ document.getElementById("savingDate").min=data.savingsStart;document.getElementById("savingDate").max=todayDate.toISOString().slice(0,10);document.getElementById("savingDate").value=todayDate.toISOString().slice(0,10);
 }
 function expenseHTML(x,del=false){return `<div class="item"><div class="ico">🧾</div><div class="grow"><strong>${esc(x.category)}</strong><div class="meta">${x.date}${x.note?" · "+esc(x.note):""}</div></div><div class="amount red">− ${money(x.amount)}</div>${del?`<button class="danger" onclick="deleteExpense(${x.id})">×</button>`:""}</div>`}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
@@ -180,14 +167,10 @@ function addSaving(){let amount=Number(document.getElementById("savingAmount").v
 function deleteSaving(id){if(confirm("Supprimer ce versement de la cagnotte ?")){data.savings=(data.savings||[]).filter(x=>x.id!==id);save()}}
 function saveSettings(){data.salary=Number(document.getElementById("salaryInput").value)||0;data.balance=Number(document.getElementById("balanceInput").value)||0;save();alert("Paramètres enregistrés.")}
 function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="my-treasury-sauvegarde.json";a.click();URL.revokeObjectURL(a.href)}
-function resetData(){if(confirm("Effacer toutes tes opérations et revenir aux paramètres initiaux ?")){data=cloneDefault();save()}}
+function resetData(){if(confirm("Effacer toutes tes opérations et revenir aux paramètres initiaux ?")){data=structuredClone(DEFAULT);save()}}
 function showPage(p){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(p).classList.add("active");document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===p));window.scrollTo(0,0)}
-window.addEventListener("error",function(event){
- console.error("Erreur JavaScript My Treasury :",event.error||event.message);
-});
 document.getElementById("expenseDate").value=new Date().toISOString().slice(0,10);
-if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(e=>console.warn("Service worker non enregistré :",e));
-try{render()}catch(e){console.error("Erreur pendant l'affichage :",e);alert("My Treasury a rencontré une erreur au démarrage. Recharge la page. Si le problème persiste, envoie une capture de la console du navigateur.")}
-
+if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});
+render();
 </script>
 </body></html>
