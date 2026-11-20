@@ -124,8 +124,21 @@ const DEFAULT={salary:16000,balance:0,savingsGoal:70,savingsStart:"2026-12-01",s
 {id:3,name:"Wi-Fi",amount:250,day:10,paidMonth:""},
 {id:4,name:"Crédit",amount:2347,day:2,paidMonth:""}],expenses:[]};
 let data=load();
-function load(){try{return {...DEFAULT,...JSON.parse(localStorage.getItem("myTreasury")||"{}")}}catch(e){return structuredClone(DEFAULT)}}
-function save(){localStorage.setItem("myTreasury",JSON.stringify(data));render()}
+function cloneDefault(){return JSON.parse(JSON.stringify(DEFAULT))}
+function load(){
+ try{
+  const stored=JSON.parse(localStorage.getItem("myTreasury")||"{}");
+  const result={...cloneDefault(),...(stored&&typeof stored==="object"?stored:{})};
+  if(!Array.isArray(result.bills)) result.bills=cloneDefault().bills;
+  if(!Array.isArray(result.expenses)) result.expenses=[];
+  if(!Array.isArray(result.savings)) result.savings=[];
+  return result;
+ }catch(e){console.error("Erreur de lecture des données My Treasury :",e);return cloneDefault()}
+}
+function save(){
+ try{localStorage.setItem("myTreasury",JSON.stringify(data));render()}
+ catch(e){console.error("Erreur d'enregistrement :",e);alert("Impossible d'enregistrer les données dans ce navigateur. Vérifie l'espace disponible et les paramètres de confidentialité.")}
+}
 function money(n){return Number(n||0).toLocaleString("fr-FR",{maximumFractionDigits:2})+" DH"}
 function monthKey(d=new Date()){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
 function monthStart(){return new Date(new Date().getFullYear(),new Date().getMonth(),1)}
@@ -167,10 +180,14 @@ function addSaving(){let amount=Number(document.getElementById("savingAmount").v
 function deleteSaving(id){if(confirm("Supprimer ce versement de la cagnotte ?")){data.savings=(data.savings||[]).filter(x=>x.id!==id);save()}}
 function saveSettings(){data.salary=Number(document.getElementById("salaryInput").value)||0;data.balance=Number(document.getElementById("balanceInput").value)||0;save();alert("Paramètres enregistrés.")}
 function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="my-treasury-sauvegarde.json";a.click();URL.revokeObjectURL(a.href)}
-function resetData(){if(confirm("Effacer toutes tes opérations et revenir aux paramètres initiaux ?")){data=structuredClone(DEFAULT);save()}}
+function resetData(){if(confirm("Effacer toutes tes opérations et revenir aux paramètres initiaux ?")){data=cloneDefault();save()}}
 function showPage(p){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(p).classList.add("active");document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===p));window.scrollTo(0,0)}
+window.addEventListener("error",function(event){
+ console.error("Erreur JavaScript My Treasury :",event.error||event.message);
+});
 document.getElementById("expenseDate").value=new Date().toISOString().slice(0,10);
-if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});
-render();
+if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(e=>console.warn("Service worker non enregistré :",e));
+try{render()}catch(e){console.error("Erreur pendant l'affichage :",e);alert("My Treasury a rencontré une erreur au démarrage. Recharge la page. Si le problème persiste, envoie une capture de la console du navigateur.")}
+
 </script>
 </body></html>
